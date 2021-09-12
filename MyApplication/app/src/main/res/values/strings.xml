@@ -5,4 +5,5 @@
     <string name="text01">Placeholder Text 01</string>
     <string name="text02">Some other text</string>
     <string name="switchText">Toggle Text</string>
+    <string name="star_button">Pretty Star</string>
 </resources>
