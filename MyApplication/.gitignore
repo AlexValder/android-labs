@@ -13,3 +13,8 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Reports don't go upstream sorry
+*.docx
+*.doc
+*.odt
