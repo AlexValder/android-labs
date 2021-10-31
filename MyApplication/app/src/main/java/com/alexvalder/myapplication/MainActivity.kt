@@ -4,10 +4,8 @@ import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import android.view.Menu
 import android.view.MenuItem
-import android.widget.ImageButton
-import android.widget.TextView
-import android.widget.Toast
-import androidx.appcompat.widget.SwitchCompat
+import android.view.animation.AnimationUtils
+import android.widget.*
 import com.alexvalder.myapplication.databinding.ActivityMainBinding
 
 /**
@@ -17,11 +15,9 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
 
-    private lateinit var switch: SwitchCompat
-    private lateinit var textView: TextView
-    private lateinit var starButton: ImageButton
-
-    private var buttonsPressed: Int = 0
+    private lateinit var image: ImageView
+    private lateinit var button1: Button
+    private lateinit var button2: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,31 +26,37 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
         setSupportActionBar(binding.toolbar)
 
-        textView = findViewById(R.id.testTextView)
+        val animation1 = AnimationUtils.loadAnimation(
+            applicationContext,
+            R.anim.animation1,
+        )
 
-        switch = findViewById(R.id.switchCompatText)
-        switch.apply {
-            setOnCheckedChangeListener { _, checked ->
-                textView.text = when (checked) {
-                    true -> getString(R.string.text02)
-                    false -> getString(R.string.text01)
-                }
-            }
+        image = findViewById(R.id.androidImage)
+
+        button1 = findViewById(R.id.buttonLeft)
+        button1.setOnClickListener {
+            image.startAnimation(animation1)
+            Toast.makeText(
+                this,
+                "Animation started",
+                Toast.LENGTH_SHORT,
+            ).show()
+            button1.isEnabled = false
+            button2.isEnabled = true
         }
 
-        starButton = findViewById(R.id.starButton)
-        starButton.apply {
-            setOnClickListener {
-                buttonsPressed += 1
-                Toast.makeText(
-                    this@MainActivity,
-                    "You pressed button $buttonsPressed " +
-                            if (buttonsPressed == 1) "time" else "times",
-                    Toast.LENGTH_SHORT,
-                ).show()
-            }
+        button2 = findViewById(R.id.buttonRight)
+        button2.isEnabled = false
+        button2.setOnClickListener {
+            image.clearAnimation()
+            Toast.makeText(
+                this,
+                "Animation was canceled",
+                Toast.LENGTH_SHORT,
+            ).show()
+            button1.isEnabled = true
+            button2.isEnabled = false
         }
-
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -67,5 +69,9 @@ class MainActivity : AppCompatActivity() {
             R.id.action_settings -> true
             else -> super.onOptionsItemSelected(item)
         }
+    }
+
+    companion object {
+        private const val TAG = "MainApplication"
     }
 }
