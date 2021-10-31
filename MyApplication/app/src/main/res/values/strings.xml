@@ -2,8 +2,7 @@
     <string name="app_name">My Application</string>
     <string name="action_settings">Nothing to see here yet</string>
 
-    <string name="text01">Placeholder Text 01</string>
-    <string name="text02">Some other text</string>
-    <string name="switchText">Toggle Text</string>
-    <string name="star_button">Pretty Star</string>
+    <string name="buttonLeft">Start</string>
+    <string name="buttonRight">Stop</string>
+    <string name="android">Android Robot</string>
 </resources>
