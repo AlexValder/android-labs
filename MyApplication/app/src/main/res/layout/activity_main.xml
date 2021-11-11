@@ -31,22 +31,22 @@
             android:layout_height="match_parent"
             android:orientation="vertical">
 
-
-            <ImageView
-                android:id="@+id/androidImage"
-                android:layout_width="0dp"
+            <TextView
+                android:id="@+id/textView"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:adjustViewBounds="true"
-                android:contentDescription="@string/android"
-                android:cropToPadding="false"
-                android:scaleType="fitCenter"
-                app:layout_constraintBottom_toTopOf="@id/buttonLeft"
+                android:layout_marginStart="32dp"
+                android:layout_marginTop="32dp"
+                android:layout_marginEnd="32dp"
+                android:layout_marginBottom="32dp"
+                android:textAlignment="center"
+                android:textAllCaps="false"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                app:layout_constraintBottom_toTopOf="@+id/buttonLeft"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:srcCompat="@drawable/android"
-                tools:srcCompat="@drawable/android" />
+                app:layout_constraintTop_toTopOf="parent" />
 
             <Button
                 android:id="@+id/buttonLeft"
