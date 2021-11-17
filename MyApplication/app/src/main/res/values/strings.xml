@@ -1,9 +1,4 @@
 <resources>
     <string name="app_name">My Application</string>
-    <string name="action_settings">Nothing to see here yet</string>
-
-    <string name="buttonLeft">Сісти на потяг</string>
-    <string name="buttonRight">Зійти з потягу</string>
-    <string name="click_me">Click me!</string>
-    <string name="show_secret">Show Secret</string>
+    <string name="remove">Remove</string>
 </resources>
