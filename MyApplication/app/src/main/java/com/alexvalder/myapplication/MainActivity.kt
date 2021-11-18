@@ -1,18 +1,24 @@
 package com.alexvalder.myapplication
 
 import android.annotation.SuppressLint
-import android.content.ContentValues
 import android.os.Bundle
-import android.provider.BaseColumns
-import android.view.ContextMenu
-import android.view.ContextMenu.ContextMenuInfo
+import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.*
-import androidx.core.view.children
 import com.alexvalder.myapplication.databinding.ActivityMainBinding
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import java.io.BufferedReader
+import java.io.InputStreamReader
+import java.net.HttpURLConnection
+import java.net.URL
 
 /**
  * Main activity of the application and start screen.
@@ -20,12 +26,10 @@ import com.alexvalder.myapplication.databinding.ActivityMainBinding
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
-    private lateinit var linearLayout: LinearLayout
+    private lateinit var textList: LinearLayout
 
-    private lateinit var dbHelper: ReaderContract.ReaderDbHelper
+    private val scope = CoroutineScope(Dispatchers.IO)
 
-    private val ids = mutableListOf<Int>()
-    private var selectedItem: Int = -1
 
     @SuppressLint("SetTextI18n")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -35,101 +39,71 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
         setSupportActionBar(binding.toolbar)
 
-        dbHelper = ReaderContract.ReaderDbHelper(this)
-
-        prepareDb()
-        prepareGui()
+        textList = findViewById(R.id.testList)
     }
 
-    private fun prepareDb() {
-        val db = dbHelper.writableDatabase
-        repeat(10) {
-            db.insert(
-                ReaderContract.Entry.TABLE_NAME,
-                null,
-                ContentValues().apply {
-                    put(ReaderContract.Entry.COLUMN_NAME_TITLE, "Item $it")
-                })
-        }
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.toolbar_menu, menu)
+        return super.onCreateOptionsMenu(menu)
     }
 
-    private fun prepareGui() {
-        linearLayout = findViewById(R.id.testList)
-        linearLayout.apply {
-            children.forEach { unregisterForContextMenu(it) }
-            removeAllViews()
+    override fun onOptionsItemSelected(item: MenuItem) = when(item.itemId) {
+        R.id.refresh -> {
+            updateGui()
+            true
+        }
+        else -> super.onOptionsItemSelected(item)
+    }
+
+    private fun updateGui() {
+        if (textList.childCount > 0) {
+            textList.removeAllViews()
         }
 
-        ids.clear()
-        val db = dbHelper.readableDatabase
-        val cursor = db.query(
-            ReaderContract.Entry.TABLE_NAME,
-            arrayOf(
-                BaseColumns._ID,
-                ReaderContract.Entry.COLUMN_NAME_TITLE,
-            ),
-            null,
-            null,
-            null,
-            null,
-            null,
-        )
-        with(cursor) {
-            while (moveToNext()) {
-                linearLayout.addView(
-                    TextView(this@MainActivity).also {
-                        ids.add(getInt(getColumnIndexOrThrow(BaseColumns._ID)))
-                        it.text = getString(
-                            getColumnIndexOrThrow(ReaderContract.Entry.COLUMN_NAME_TITLE)
-                        )
-                        it.textAlignment = View.TEXT_ALIGNMENT_CENTER
-                        this@MainActivity.registerForContextMenu(it)
+        try {
+            val json = runBlocking(Dispatchers.IO) {
+                val url = URL(BANK_URI)
+                val connection = url.openConnection() as HttpURLConnection
+
+                val lines = if (connection.responseCode in 100..399) {
+                    BufferedReader(InputStreamReader(connection.inputStream))
+                } else {
+                    BufferedReader(InputStreamReader(connection.errorStream))
+                }.readLines().joinToString(
+                    separator = "",
+                    prefix = "",
+                    postfix = "",
+                )
+
+                Json.parseToJsonElement(lines).jsonArray
+            }
+
+            /*
+             r030 -> number
+             txt -> name
+             rate -> ???
+             cc -> code
+             exchangedate -> today's date
+             */
+
+            for (entry in json.asIterable()) {
+                val map = entry.jsonObject.toMap()
+
+                textList.addView(
+                    TextView(this@MainActivity).apply {
+                        text = "${map["r030"]} : ${map["txt"]} : ${map["cc"]} : ${map["rate"]}"
+                        textAlignment = View.TEXT_ALIGNMENT_CENTER
                     }
                 )
             }
+        } catch (thr: Throwable) {
+            Log.e(TAG, "Fuck", thr)
         }
-        cursor.close()
-    }
-
-    override fun onCreateContextMenu(menu: ContextMenu, v: View, menuInfo: ContextMenuInfo?) {
-        super.onCreateContextMenu(menu, v, menuInfo)
-        (v as? TextView)?.let {
-            menu.setHeaderTitle(it.text)
-        }
-
-        (v.parent as? LinearLayout)?.let {
-            selectedItem = ids[it.indexOfChild(v)]
-        }
-
-        menuInflater.inflate(R.menu.context_menu, menu)
-    }
-
-    override fun onContextItemSelected(item: MenuItem): Boolean {
-        when (item.title) {
-            "Remove" -> {
-                if (selectedItem != -1) {
-                    dbHelper.writableDatabase.delete(
-                        ReaderContract.Entry.TABLE_NAME,
-                        "${BaseColumns._ID} = ?",
-                        arrayOf("$selectedItem")
-                    )
-                }
-                prepareGui()
-                selectedItem = -1
-                return true
-            }
-        }
-        selectedItem = -1
-        return super.onContextItemSelected(item)
-    }
-
-    override fun onDestroy() {
-        dbHelper.close()
-        super.onDestroy()
     }
 
     companion object {
         private const val TAG = "MainApplication"
-        private const val DATABASE = "test.db"
+        private const val BANK_URI =
+            "https://bank.gov.ua/NBUStatService/v1/statdirectory/exchangenew?json"
     }
 }
